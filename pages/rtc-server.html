@@ -19,17 +19,19 @@
         sendChannel.onopen = (e)=>{console.log("onopen:",e)};
         sendChannel.onmessage = e=>{console.log("onmessage",e)}
         sendChannel.onclose = (e)=>{console.log("onclose:",e)};
-        
-        localConnection.onicecandidate=(e)=>{console.log("onicecandidate:",e)}
+                
 
-
-        localConnection.createOffer()
-        .then(offer => localConnection.setLocalDescription(offer))
-        .then(()=>{
-            
+        localConnection.onicecandidate = (e)=>{
+            console.log(localConnection.iceGatheringState,"state")
             console.log(localConnection.localDescription)
-            window.offerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('offer://' + JSON.stringify(localConnection.localDescription))}`
-        })
+            console.log(e)
+            if(localConnection.iceGatheringState === "complete"){
+                window.offerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('offer://' + JSON.stringify(localConnection.localDescription))}`
+            }
+        }
+        localConnection.createOffer().then(offer=>localConnection.setLocalDescription(offer))
+
+
         // .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
         // .then(() => remoteConnection.createAnswer())
         // .then(answer => remoteConnection.setLocalDescription(answer))
@@ -52,7 +54,7 @@
         // });
         function connect(answer){
             console.log(answer,"answer")
-            localConnection.setRemoteDescription(answer).then(res=>console)
+            localConnection.setRemoteDescription(answer).then(res=>console.log(res)).catch(err=>console.error)
         }
     </script>
      <script>
