@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caller</title>
+    <script src="https://cozmo.github.io/jsQR/jsQR.js"></script>
+</head>
+<body>
+
+    <canvas id="canvasElement" hidden></canvas>
+    <img id="offerQR"/>
+    <script>
+
+        localConnection = new RTCPeerConnection();
+
+        sendChannel = localConnection.createDataChannel("sendChannel");
+        sendChannel.onopen = (e)=>{console.log("onopen:",e)};
+        sendChannel.onclose = (e)=>{console.log("onclose:",e)};
+        
+        localConnection.onicecandidate=(e)=>{console.log("onicecandidate:",e)}
+
+
+        localConnection.createOffer()
+        .then(offer => localConnection.setLocalDescription(offer))
+        .then(()=>{
+            
+            console.log(localConnection.localDescription,)
+            window.offerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('offer://' + JSON.stringify(localConnection.localDescription))}`
+        })
+        // .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
+        // .then(() => remoteConnection.createAnswer())
+        // .then(answer => remoteConnection.setLocalDescription(answer))
+        // .then(() => localConnection.setRemoteDescription(remoteConnection.localDescription))
+        // .catch(handleCreateDescriptionError);
+
+
+        // navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "user"} })
+        // .then(function(mediaStream) {
+        //     console.log(mediaStream)
+        //     var video = document.querySelector('video');
+        //     video.srcObject = mediaStream;
+        //     video.onloadedmetadata = function(e) {
+        //         video.play();
+        //     };
+        //     /* 使用这个 stream stream */
+        // })
+        // .catch(function(err) {
+        // /* 处理 error */
+        // });
+        function connect(answer){
+            console.log(answer,"answer")
+            localConnection.setRemoteDescription(answer)
+        }
+    </script>
+     <script>
+        var video = document.createElement("video");
+        var canvas = canvasElement.getContext("2d");
+        navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "environment" } })
+            .then(function(mediaStream) {
+                video.srcObject = mediaStream;
+                video.setAttribute("playsinline", true); // required to tell iOS safari we don't want fullscreen
+                video.play();
+                requestAnimationFrame(tick);
+                /* 使用这个 stream stream */
+            })
+            .catch(function(err) {
+            /* 处理 error */
+            console.error(err)
+            });
+    
+        function drawLine(begin, end, color) {
+            canvas.beginPath();
+            canvas.moveTo(begin.x, begin.y);
+            canvas.lineTo(end.x, end.y);
+            canvas.lineWidth = 4;
+            canvas.strokeStyle = color;
+            canvas.stroke();
+        }
+        var lock = false
+    
+        function tick() {
+          if (!lock && video.readyState === video.HAVE_ENOUGH_DATA) {
+            canvasElement.hidden = false;
+    
+            canvasElement.height = video.videoHeight;
+            canvasElement.width = video.videoWidth;
+            canvas.drawImage(video, 0, 0, canvasElement.width, canvasElement.height);
+            var imageData = canvas.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            var code = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: "dontInvert",
+            });
+            if (code) {
+              drawLine(code.location.topLeftCorner, code.location.topRightCorner, "#FF3B58");
+              drawLine(code.location.topRightCorner, code.location.bottomRightCorner, "#FF3B58");
+              drawLine(code.location.bottomRightCorner, code.location.bottomLeftCorner, "#FF3B58");
+              drawLine(code.location.bottomLeftCorner, code.location.topLeftCorner, "#FF3B58");
+            //   outputData.innerText = code.data;
+                let data = decodeURIComponent(code.data)
+                if(/^(answer\:\/\/)/.test(data)){
+                    lock = true
+                    data = data.replace(/^(answer\:\/\/)/gi,"")
+                    connect(JSON.parse(data))
+                }
+            }
+          }
+          requestAnimationFrame(tick);
+        }
+        </script>
+        <script>
+
+        </script>
+</body>
+</html>
