@@ -72,14 +72,19 @@
         function connect(offer){
             console.log(offer)
             remoteConnection = new RTCPeerConnection();
-            remoteConnection.ondatachannel = (e)=>{console.log("ondatachannel:",e)}
+            remoteConnection.ondatachannel = (e)=>{
+                console.log("ondatachannel:",e)
+                receiveChannel = event.channel;
+                receiveChannel.onmessage = (e)=>{console.log("onmessage",e)};
+                receiveChannel.onopen = (e)=>{console.log("onopen",e)};
+                receiveChannel.onclose = (e)=>{console.log("onclose",e)};
+            }
             remoteConnection.onicecandidate=(e)=>{console.log("remoteConnection:",e)}
-            remoteConnection.setRemoteDescription(offer)
-            remoteConnection.createAnswer().then(answer=>{
-
-                console.log(answer)
-                window.answerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('answer://' + JSON.stringify(answer))}`
-            })
+            remoteConnection.setRemoteDescription(offer).then(()=>remoteConnection.createAnswer().then(answer=>{
+                remoteConnection.setLocalDescription(answer).then(()=>{
+                    window.answerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('answer://' + JSON.stringify(remoteConnection.localDescription))}`
+                })
+            }))
         }
        
     </script>
