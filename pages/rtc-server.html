@@ -17,6 +17,7 @@
 
         sendChannel = localConnection.createDataChannel("sendChannel");
         sendChannel.onopen = (e)=>{console.log("onopen:",e)};
+        sendChannel.onmessage = e=>{console.log("onmessage",e)}
         sendChannel.onclose = (e)=>{console.log("onclose:",e)};
         
         localConnection.onicecandidate=(e)=>{console.log("onicecandidate:",e)}
@@ -26,7 +27,7 @@
         .then(offer => localConnection.setLocalDescription(offer))
         .then(()=>{
             
-            console.log(localConnection.localDescription,)
+            console.log(localConnection.localDescription)
             window.offerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('offer://' + JSON.stringify(localConnection.localDescription))}`
         })
         // .then(() => remoteConnection.setRemoteDescription(localConnection.localDescription))
@@ -51,7 +52,7 @@
         // });
         function connect(answer){
             console.log(answer,"answer")
-            localConnection.setRemoteDescription(answer)
+            localConnection.setRemoteDescription(answer).then(res=>console)
         }
     </script>
      <script>
