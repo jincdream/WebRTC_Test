@@ -79,12 +79,19 @@
                 receiveChannel.onopen = (e)=>{console.log("onopen",e)};
                 receiveChannel.onclose = (e)=>{console.log("onclose",e)};
             }
-            remoteConnection.onicecandidate=(e)=>{console.log("remoteConnection:",e)}
-            remoteConnection.setRemoteDescription(offer).then(()=>remoteConnection.createAnswer().then(answer=>{
-                remoteConnection.setLocalDescription(answer).then(()=>{
+            remoteConnection.onicecandidate=(e)=>{
+                console.log(remoteConnection.iceGatheringState,"state")
+                console.log(remoteConnection.localDescription)
+                console.log(e)
+                if(remoteConnection.iceGatheringState === "complete"){
                     window.answerQR.src = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encodeURIComponent('answer://' + JSON.stringify(remoteConnection.localDescription))}`
+                }
+            }
+            remoteConnection.setRemoteDescription(offer)
+                .then(res=>{
+                    remoteConnection.createAnswer()
+                    .then(answer=>remoteConnection.setLocalDescription(answer))
                 })
-            }))
         }
        
     </script>
